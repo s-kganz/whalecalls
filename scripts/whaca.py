@@ -47,8 +47,8 @@ class whaca:
             for j, val in enumerate(s[:,i]):
                 if val > self.db_thresh:
                     points.append(j)
-            if points and np.absolute(freq[max(points)] - freq[min(points)]) > self.width_thresh:
-                s[:,i] = np.zeros(len(s[:,i]))
+            if len(points) != 0 and np.absolute(freq[max(points)] - freq[min(points)]) > self.width_thresh:
+                s[:,i] = np.zeros(len(s[:,i])) + np.min(s)
         return s
     # generate audio specgram for call detection
     
