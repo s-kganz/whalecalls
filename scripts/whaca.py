@@ -20,6 +20,8 @@ class whaca:
         self.NFFT = NFFT
         self.window = window
     
+    # file io
+    
     def open_wav(self,f):
         self.rate,self.data = wav.read(f)
     
@@ -28,15 +30,33 @@ class whaca:
         sound = read(f)[0]
         self.data = (sound.normalize() * (2 ** 31 - 1)).astype("int32")
         self.rate = sound.stats.sampling_rate
-        
+    
+    # audio processing functions
+    
+    def _sub_avg(self):
+        new = self.data.copy()
+        for r in new:
+            r -= np.average(r)
+        return new
+    
+    # generate audio specgram for call detection
+    
     def gen_spectro(self, process = True):
+        if process:
+            # TODO remove broadband sound
+            self.data = self._sub_avg()
         s,f,t = mlab.specgram(self.data,
                              NFFT = self.NFFT,
                              Fs = self.rate)
         # convert to db
         s = 10 * np.log10(s)
         s = np.flipud(s)
+        # restrict zeros
+        self.data[self.data < 0] = 0
         return s,f,t
+    
+    # find sounds with given parameters
+    
     def find_sounds(self):
         # stub
         pass
@@ -47,6 +67,7 @@ class whaca:
         return {"db_thresh":self.db_thresh,
                 "time_thresh":self.time_thresh,
                 "width_thresh":self.width_thresh}
+                
     def set_threshold_params(self, db_thresh = None, time_thresh = None, width_thresh = None):
         if db_thresh:
             self.db_thresh = db_thresh
@@ -54,11 +75,13 @@ class whaca:
             self.time_thresh = time_thresh
         if width_thresh:
             self.width_thresh = width_thresh
+            
     def set_spectro_params(self, NFFT = None, window = None):
         if NFFT:
             self.NFFT = NFFT
         if window:
             self.window = window
+            
     def get_spectro_params(self):
         return {"NFFT":self.NFFT,
                 "window":self.window}
