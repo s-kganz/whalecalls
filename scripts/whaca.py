@@ -11,7 +11,7 @@ class whaca:
 
     DATA_TYPES = ["wav","mseed"]
     
-    def __init__(self, db_thresh = 10, time_thresh = 0.5, width_thresh = None, NFFT = 512, window = None):
+    def __init__(self, db_thresh = 15, time_thresh = 0.5, width_thresh = 1000, NFFT = 512, window = None):
         # save threshold parameters
         self.db_thresh = db_thresh
         self.time_thresh = time_thresh
@@ -33,33 +33,45 @@ class whaca:
     
     # audio processing functions
     
-    def _sub_avg(self):
-        new = self.data.copy()
+    # subtract average intensity of each frequency
+    def _sub_avg(self,s):
+        new = s.copy()
         for r in new:
             r -= np.average(r)
         return new
     
+    # eliminate broadband noises
+    def _bb_reduc(self,s,freq):
+        for i in range(0,np.ma.size(s,axis=1)):
+            points = []
+            for j, val in enumerate(s[:,i]):
+                if val > self.db_thresh:
+                    points.append(j)
+            if points and np.absolute(freq[max(points)] - freq[min(points)]) > self.width_thresh:
+                s[:,i] = np.zeros(len(s[:,i]))
+        return s
     # generate audio specgram for call detection
     
     def gen_spectro(self, process = True):
-        if process:
-            # TODO remove broadband sound
-            self.data = self._sub_avg()
-            
         s,f,t = mlab.specgram(self.data,
                              NFFT = self.NFFT,
                              Fs = self.rate)
         # convert to db
         s = 10 * np.log10(s)
         s = np.flipud(s)
-        # restrict zeros
-        s[s < 0] = 0
+        if process:
+            # TODO remove broadband sound
+            s = self._bb_reduc(s,f)
+            s = self._sub_avg(s)
+            # restrict zeros
+            s[s < 0] = 0
         return s,f,t
     
     # find sounds with given parameters
     
     def find_sounds(self):
         # stub
+        # is this method necessary?
         pass
         
     # gets and sets
