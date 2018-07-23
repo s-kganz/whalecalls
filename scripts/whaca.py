@@ -45,6 +45,7 @@ class whaca:
         if process:
             # TODO remove broadband sound
             self.data = self._sub_avg()
+            
         s,f,t = mlab.specgram(self.data,
                              NFFT = self.NFFT,
                              Fs = self.rate)
@@ -52,7 +53,7 @@ class whaca:
         s = 10 * np.log10(s)
         s = np.flipud(s)
         # restrict zeros
-        self.data[self.data < 0] = 0
+        s[s < 0] = 0
         return s,f,t
     
     # find sounds with given parameters
