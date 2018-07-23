@@ -11,7 +11,7 @@ class whaca:
 
     DATA_TYPES = ["wav","mseed"]
     
-    def __init__(self, db_thresh = 15, time_thresh = 0.5, width_thresh = 1000, NFFT = 512, window = None):
+    def __init__(self, db_thresh = 10, time_thresh = 0.5, width_thresh = 1000, NFFT = 512, window = None):
         # save threshold parameters
         self.db_thresh = db_thresh
         self.time_thresh = time_thresh
@@ -42,14 +42,26 @@ class whaca:
     
     # eliminate broadband noises
     def _bb_reduc(self,s,freq):
+        # iterate along columns
         for i in range(0,np.ma.size(s,axis=1)):
             points = []
             for j, val in enumerate(s[:,i]):
                 if val > self.db_thresh:
                     points.append(j)
-            if len(points) != 0 and np.absolute(freq[max(points)] - freq[min(points)]) > self.width_thresh:
+            long = self._find_longest_sequence(points)
+            if np.absolute(freq[long[1]] - freq[long[0]]) > self.width_thresh:
                 s[:,i] = np.zeros(len(s[:,i])) + np.min(s)
         return s
+    
+    # find longest sequence in array
+    def _find_longest_sequence(self,arr):
+        start = 0
+        seq = [0,0]
+        for i in range(0,len(arr) - 1):
+            if arr[i + 1] - arr[i] != 1 and i + 1 - start > len(seq):
+                seq = arr[start:i+1]
+                start = i + 1
+        return seq[0],seq[-1]
     # generate audio specgram for call detection
     
     def gen_spectro(self, process = True):
