@@ -12,6 +12,7 @@ class whaca:
         self.db_thresh = db_thresh
         self.time_thresh = time_thresh
         self.width_thresh = width_thresh
+        # save specgram parameters
         self.NFFT = NFFT
         self.window = window
 
