@@ -1,5 +1,6 @@
 # file io
 from scipy.io import wavfile as wav
+from obspy import read
 # filter narrowband sound
 from scipy.signal import medfilt
 # specgram function
@@ -7,6 +8,9 @@ from matplotlib import mlab
 import numpy as np
 
 class whaca:
+
+    DATA_TYPES = ["wav","mseed"]
+    
     def __init__(self, db_thresh = 10, time_thresh = 0.5, width_thresh = None, NFFT = 512, window = None):
         # save threshold parameters
         self.db_thresh = db_thresh
@@ -19,6 +23,12 @@ class whaca:
     def open_wav(self,f):
         self.rate,self.data = wav.read(f)
     
+    def open_mseed(self,f):
+        # TODO add support for multiple streams
+        sound = read(f)[0]
+        self.data = (sound.normalize() * (2 ** 31 - 1)).astype("int32")
+        self.rate = sound.stats.sampling_rate
+        
     def gen_spectro(self, process = True):
         s,f,t = mlab.specgram(self.data,
                              NFFT = self.NFFT,
