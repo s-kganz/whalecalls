@@ -1,12 +1,18 @@
 # file io
 from scipy.io import wavfile as wav
 from obspy import read
-import requests
+
+# web resources
+from urllib.request import urlretrieve
+
 # filter narrowband sound
 from scipy.signal import medfilt
+
 # specgram function
 from matplotlib import mlab
 import numpy as np
+
+import warnings
 
 class whaca:
     
@@ -21,7 +27,12 @@ class whaca:
     
     def open_wav(self,f):
         # call scipy module
-        self.rate,self.data = wav.read(f)
+        rate,data = wav.read(f)
+        if data.ndim != 1:
+            warnings.warn("Only mono files are supported, using left channel")
+            data = data[:,0]
+        self.rate = rate
+        self.data = data
             
     def open_mseed(self,f):
         # TODO add support for multiple streams
@@ -31,7 +42,7 @@ class whaca:
         
     def open_url(self,url):
     
-        DATA_TYPES = {"wav":self.open_wav,
+        data_types = {"wav":self.open_wav,
                   "mseed":self.open_mseed}
         
         # find last occurrence of dot
@@ -41,12 +52,13 @@ class whaca:
             # determine file extension
             ext = url[di + 1:]
             # check if supported
-            if ext in DATA_TYPES.keys():
-                DATA_TYPES[ext](requests.get(url).content)
+            if ext in data_types.keys():
+                f,headers = urlretrieve(url)
+                data_types[ext](f)
             else:
                 raise ValueError(ext + " is not a valid file type!")
         else:
-            raise ValueError(url + " does not look like a valid url!")   
+            raise ValueError(url + " does not look like a valid url!")
             
     def gen_spectro(self, process = True):
         s,f,t = mlab.specgram(self.data,
