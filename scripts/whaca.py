@@ -1,15 +1,20 @@
 # file io
 from scipy.io import wavfile as wav
 from obspy import read
+
+# web resources
+from urllib.request import urlretrieve
+
 # filter narrowband sound
 from scipy.signal import medfilt
+
 # specgram function
 from matplotlib import mlab
 import numpy as np
 
-class whaca:
+import warnings
 
-    DATA_TYPES = ["wav","mseed"]
+class whaca:
     
     def __init__(self, db_thresh = 10, time_thresh = 0.5, width_thresh = 1000, NFFT = 512, window = None):
         # save threshold parameters
@@ -23,13 +28,39 @@ class whaca:
     # file io
     
     def open_wav(self,f):
-        self.rate,self.data = wav.read(f)
-    
+        # call scipy module
+        rate,data = wav.read(f)
+        if data.ndim != 1:
+            warnings.warn("Only mono files are supported, using left channel")
+            data = data[:,0]
+        self.rate = rate
+        self.data = data
+            
     def open_mseed(self,f):
         # TODO add support for multiple streams
         sound = read(f)[0]
         self.data = (sound.normalize() * (2 ** 31 - 1)).astype("int32")
         self.rate = sound.stats.sampling_rate
+        
+    def open_url(self,url):
+    
+        data_types = {"wav":self.open_wav,
+                  "mseed":self.open_mseed}
+        
+        # find last occurrence of dot
+        di = url.rfind(".")
+        # check the dot was found
+        if di != -1:
+            # determine file extension
+            ext = url[di + 1:]
+            # check if supported
+            if ext in data_types.keys():
+                f,headers = urlretrieve(url)
+                data_types[ext](f)
+            else:
+                raise ValueError(ext + " is not a valid file type!")
+        else:
+            raise ValueError(url + " does not look like a valid url!")
     
     # audio processing functions
     
@@ -62,8 +93,8 @@ class whaca:
                 seq = arr[start:i+1]
                 start = i + 1
         return seq[0],seq[-1]
+      
     # generate audio specgram for call detection
-    
     def gen_spectro(self, process = True):
         s,f,t = mlab.specgram(self.data,
                              NFFT = self.NFFT,
