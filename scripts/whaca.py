@@ -106,7 +106,7 @@ class whaca:
         s = 10 * np.log10(s)
         s = np.flipud(s)
         if process:
-            # TODO remove broadband sound
+            s = medfilt(s)
             s = self._bb_reduc(s, f)
             s = self._sub_avg(s)
             # restrict zeros
