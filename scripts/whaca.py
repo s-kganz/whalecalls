@@ -97,9 +97,8 @@ class whaca:
     def _sub_avg(self, s):
         '''Subtracts average intensity of frequency bin from that bin in the given spectrogram.'''
         new = s.copy()
-        for r in new:
-            r -= np.average(r)
-        return new
+        means = np.mean(new, axis=1).reshape(len(new), 1)
+        return new - means
     
     def _bb_reduc(self, s, freq):
         '''
@@ -195,7 +194,8 @@ class whaca:
         groups = [lis for lis in self._group_consecutives(t)
                   if (len(lis) - 1) * tstep > self.time_thresh]
         # flatten list
-        groups = reduce(operator.add, groups)
+        if groups != []:
+            groups = reduce(operator.add, groups)
         # points not in groups need to be silenced
         silence = list(set(range(0, len(spec[0]))) - set(groups))
         spec[:, silence] = 0
