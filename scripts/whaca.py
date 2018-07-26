@@ -113,11 +113,23 @@ class whaca:
             s[s < 0] = 0
         return s, f, t
     
+    # return 2d list containing all consecutive subsets of array
+    def group_consecutives(vals, step=1):
+        run = []
+        result = [run]
+        expect = None
+        for v in vals:
+            if v == expect or expect is None:
+                run.append(v)
+            else:
+                run = [v]
+                result.append(run)
+            expect = v + step
+        return result
     # find sounds with given parameters
     
-    def find_sounds(self):
-        # stub
-        # is this method necessary?
+    def find_sounds(self, spec):
+        
         pass
         
     # gets and sets
