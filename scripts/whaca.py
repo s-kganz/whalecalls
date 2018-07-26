@@ -8,6 +8,10 @@ from urllib.request import urlretrieve
 # filter narrowband sound
 from scipy.signal import medfilt
 
+# call detection
+from functools import reduce
+import operator
+
 # specgram function
 from matplotlib import mlab
 import numpy as np
@@ -114,7 +118,7 @@ class whaca:
         return s, f, t
     
     # return 2d list containing all consecutive subsets of array
-    def group_consecutives(vals, step=1):
+    def _group_consecutives(self, vals, step=1):
         run = []
         result = [run]
         expect = None
@@ -126,11 +130,24 @@ class whaca:
                 result.append(run)
             expect = v + step
         return result
-    # find sounds with given parameters
     
-    def find_sounds(self, spec):
-        
-        pass
+    # find sounds with given parameters
+
+    def filter_sounds(self, spec, tstep):
+        # drop values below threshold
+        spec[spec < self.db_thresh] = 0
+        # times containing valid intensities
+        t = [col for col in range(0, np.ma.size(spec, axis=1)) 
+             if any(i >= self.db_thresh for i in spec[:, col])]
+        # keep time groups if they meet duration threshold
+        groups = [lis for lis in self._group_consecutives(t) 
+                  if (len(lis) - 1) * tstep > self.time_thresh]
+        # flatten list
+        groups = reduce(operator.add, groups)
+        # points not in groups need to be silenced
+        silence = list(set(range(0, len(spec[0]))) - set(groups))
+        spec[:, silence] = 0
+        return spec
         
     # gets and sets
     
