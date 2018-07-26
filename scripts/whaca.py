@@ -21,16 +21,18 @@ import warnings
 
 class whaca:
  
-    def __init__(self, db_thresh=10, time_thresh=0.5, 
+    def __init__(self, db_thresh=10, time_thresh=0.5,
                  width_thresh=1000, NFFT=512, window=None):
         '''
         Instantiate a new whaca class.
 
         Keyword arguments:
-        db_thresh=10 : Intensity threshold for broadband noise reduction and call filtering. (DB)
+        db_thresh=10 : Intensity threshold for broadband noise reduction and
+                       call filtering. (DB)
         time_thresh=0.5 : Time duration threshold for call filtering. (seconds)
         width_thresh=1000 : Bandwidth threshold for broadband noise reduction. (Hz)
-        NFFT=512 : Sample size for Fourier transform on spectrogram generation. Also roughly controls resolution of call detection.
+        NFFT=512 : Sample size for Fourier transform on spectrogram generation.
+                   Also roughly controls resolution of call detection.
         window=None : Window to be passed to Fourier transform function.
 
         '''
@@ -77,7 +79,8 @@ class whaca:
 
         Arguments:
         url: URL to be used.
-        ext: Data type of the requested resource. Supported data types: 'wav', 'mseed'
+        ext: Data type of the requested resource.
+             Supported data types: 'wav', 'mseed'
 
         '''
         data_types = {"wav": self.open_wav,
@@ -139,7 +142,8 @@ class whaca:
         Generates spectrogram from data loaded into class.
 
         Keyword Arguments:
-        process=True : Whether to apply median filter, broadband reduction, and bin avg subtraction to spectrogram.
+        process=True : Whether to apply median filter, broadband reduction,
+                       and bin avg subtraction to spectrogram.
 
         Returns:
         s: Spectrogram produced from data.
@@ -171,7 +175,6 @@ class whaca:
             expect = v + step
         return result
     
-
     def filter_sounds(self, spec, tstep):
         '''
         Filters spectrogram to only include potential whale calls.
@@ -186,10 +189,10 @@ class whaca:
         # drop values below threshold
         spec[spec < self.db_thresh] = 0
         # times containing valid intensities
-        t = [col for col in range(0, np.ma.size(spec, axis=1)) 
+        t = [col for col in range(0, np.ma.size(spec, axis=1))
              if any(i >= self.db_thresh for i in spec[:, col])]
         # keep time groups if they meet duration threshold
-        groups = [lis for lis in self._group_consecutives(t) 
+        groups = [lis for lis in self._group_consecutives(t)
                   if (len(lis) - 1) * tstep > self.time_thresh]
         # flatten list
         groups = reduce(operator.add, groups)
@@ -206,7 +209,7 @@ class whaca:
                 "time_thresh": self.time_thresh,
                 "width_thresh": self.width_thresh}
                 
-    def set_threshold_params(self, db_thresh=None, time_thresh=None, 
+    def set_threshold_params(self, db_thresh=None, time_thresh=None,
                              width_thresh=None):
         '''Set threshold parameters db_thresh, time_thresh, and width_thresh.'''
         if db_thresh:
