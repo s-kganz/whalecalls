@@ -134,9 +134,11 @@ class whaca:
         return seq[0], seq[-1]
       
     def gen_spectro(self, process=True):
+        
         s, f, t = mlab.specgram(self.data,
                                 NFFT=self.NFFT,
-                                Fs=self.rate)
+                                Fs=self.rate,
+                                noverlap=self.NFFT // 2)
         '''
         Generates spectrogram from data loaded into class.
 
