@@ -16,6 +16,9 @@ import operator
 from matplotlib import mlab
 import numpy as np
 
+# helper functions
+from arraypack import sub_avg, find_longest_sequence, group_consecutives
+
 import warnings
 
 
@@ -94,12 +97,6 @@ class whaca:
     
     # audio processing functions
     
-    def _sub_avg(self, s):
-        '''Subtracts average intensity of frequency bin from that bin in the given spectrogram.'''
-        new = s.copy()
-        means = np.mean(new, axis=1).reshape(len(new), 1)
-        return new - means
-    
     def _bb_reduc(self, s, freq):
         '''
         Reduces broadband noise in the given spectrogram.
@@ -118,20 +115,10 @@ class whaca:
             for j, val in enumerate(s[:, i]):
                 if val > self.db_thresh:
                     points.append(j)
-            long = self._find_longest_sequence(points)
+            long = find_longest_sequence(points)
             if np.absolute(freq[long[1]] - freq[long[0]]) > self.width_thresh:
                 s[:, i] = np.zeros(len(s[:, i])) + np.min(s)
         return s
-    
-    def _find_longest_sequence(self, arr):
-        '''Finds longest consecutive sequence in array.'''
-        start = 0
-        seq = [0, 0]
-        for i in range(0, len(arr) - 1):
-            if arr[i + 1] - arr[i] != 1 and i + 1 - start > len(seq):
-                seq = arr[start:i+1]
-                start = i + 1
-        return seq[0], seq[-1]
       
     def gen_spectro(self, process=True):
         
@@ -157,24 +144,10 @@ class whaca:
         if process:
             s = medfilt(s)
             s = self._bb_reduc(s, f)
-            s = self._sub_avg(s)
+            s = sub_avg(s)
             # restrict negative intensities
             s[s < 0] = 0
         return s, f, t
-    
-    def _group_consecutives(self, vals, step=1):
-        '''Returns 2d list containing all consecutive subsets of array based off of given step size.'''
-        run = []
-        result = [run]
-        expect = None
-        for v in vals:
-            if v == expect or expect is None:
-                run.append(v)
-            else:
-                run = [v]
-                result.append(run)
-            expect = v + step
-        return result
     
     def filter_sounds(self, spec, tstep):
         '''
@@ -191,9 +164,9 @@ class whaca:
         spec[spec < self.db_thresh] = 0
         # times containing valid intensities
         t = [col for col in range(0, np.ma.size(spec, axis=1))
-             if any(i >= self.db_thresh for i in spec[:, col])]
+             if np.nonzero(spec[:,col]) != []]
         # keep time groups if they meet duration threshold
-        groups = [lis for lis in self._group_consecutives(t)
+        groups = [lis for lis in group_consecutives(t)
                   if (len(lis) - 1) * tstep > self.time_thresh]
         # flatten list
         if groups != []:
