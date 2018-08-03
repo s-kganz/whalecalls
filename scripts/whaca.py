@@ -17,7 +17,7 @@ from matplotlib import mlab
 import numpy as np
 
 # helper functions
-from arraypack import sub_avg, find_longest_sequence, group_consecutives
+from scripts.arraypack import sub_avg, find_longest_sequence, group_consecutives
 
 import warnings
 
@@ -164,7 +164,7 @@ class whaca:
         spec[spec < self.db_thresh] = 0
         # times containing valid intensities
         t = [col for col in range(0, np.ma.size(spec, axis=1))
-             if np.nonzero(spec[:,col]) != []]
+             if any(np.nonzero(n) for n in spec[:,col])]
         # keep time groups if they meet duration threshold
         groups = [lis for lis in group_consecutives(t)
                   if (len(lis) - 1) * tstep > self.time_thresh]
