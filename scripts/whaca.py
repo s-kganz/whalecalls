@@ -17,7 +17,7 @@ from matplotlib import mlab
 import numpy as np
 
 # helper functions
-from arraypack import sub_avg, find_longest_sequence, group_consecutives
+from scripts.audiohelp import sub_avg, find_longest_sequence, group_consecutives
 
 import warnings
 
